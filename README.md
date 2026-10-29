@@ -2,6 +2,12 @@
 
 A compact iPhone companion for your latest SimBrief Operational Flight Plan. It puts the flight, aircraft, V1/VR/V2, and route up front, with useful dispatch details one tap away.
 
+<p align="center">
+  <a href="https://altdirect.app/?url=https://raw.githubusercontent.com/aepikgamer-art/flightdeck-ofp/main/altstore-source.json"><img src="https://img.shields.io/badge/ADD%20WITH-ALTDIRECT-6750D8?style=for-the-badge&logo=apple&logoColor=white" alt="Add FlightDeck with AltDirect"></a>
+  <a href="https://raw.githubusercontent.com/aepikgamer-art/flightdeck-ofp/main/altstore-source.json"><img src="https://img.shields.io/badge/ALTSTORE-SOURCE-168C72?style=for-the-badge&logo=apple&logoColor=white" alt="Open the AltStore source"></a>
+  <a href="https://github.com/aepikgamer-art/flightdeck-ofp/releases/latest/download/FlightDeck.ipa"><img src="https://img.shields.io/badge/DOWNLOAD-LATEST%20IPA-1677C8?style=for-the-badge&logo=apple&logoColor=white" alt="Download the latest IPA"></a>
+</p>
+
 ## Features
 - Fetch the latest SimBrief OFP by username or Pilot ID. No SimBrief password is requested or stored.
 - Liquid Glass styling on modern iOS, with a material fallback on older versions.
