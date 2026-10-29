@@ -2,7 +2,28 @@ import Foundation
 import SwiftUI
 
 struct FlightPlan {
-    var callsign = "", aircraft = "", registration = "", origin = "", originName = "", destination = "", destinationName = "", route = "", alternate = "", cruiseAltitude = "", distance = "", flightTime = "", blockFuel = "", takeoffWeight = "", v1 = "", vr = "", v2 = "", runway = ""
+    var callsign = "", aircraft = "", registration = "", origin = "", originName = "", destination = "", destinationName = "", route = "", alternate = "", cruiseAltitude = "", distance = "", flightTime = "", blockFuel = "", takeoffWeight = "", v1 = "", vr = "", v2 = "", runway = "", arrivalRunway = "", departureSID = "", departureTransition = "", arrivalSTAR = "", arrivalTransition = ""
+
+    var formattedRoute: String {
+        func endpoint(_ airport: String, _ runway: String) -> String {
+            guard !airport.isEmpty else { return runway.isEmpty ? "" : "/\(runway.uppercased())" }
+            return runway.isEmpty ? airport.uppercased() : "\(airport.uppercased())/\(runway.uppercased())"
+        }
+        let departureProcedures = [departureSID, departureTransition].filter { !$0.isEmpty }.map { $0.uppercased() }
+        let arrivalProcedures = [arrivalSTAR, arrivalTransition].filter { !$0.isEmpty }.map { $0.uppercased() }
+        var routeTokens = route.split(whereSeparator: \.isWhitespace).map { String($0).uppercased() }
+
+        while let first = routeTokens.first, departureProcedures.contains(first) { routeTokens.removeFirst() }
+        while let last = routeTokens.last, arrivalProcedures.contains(last) { routeTokens.removeLast() }
+
+        let departure = ([endpoint(origin, runway)] + departureProcedures).filter { !$0.isEmpty }.joined(separator: " ")
+        let enroute = routeTokens.joined(separator: " ")
+        let arrival = (arrivalProcedures + [endpoint(destination, arrivalRunway)]).filter { !$0.isEmpty }.joined(separator: " ")
+        let routeSection = [enroute, arrival].filter { !$0.isEmpty }.joined(separator: " ")
+
+        if !departure.isEmpty && !routeSection.isEmpty { return "\(departure) , \(routeSection)" }
+        return [departure, routeSection].filter { !$0.isEmpty }.joined(separator: " ")
+    }
 
     static func parse(_ data: Data) throws -> FlightPlan {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw FetchError.invalidData }
@@ -40,7 +61,10 @@ struct FlightPlan {
             v1: find(["speeds_v1", "v1"], in: root).map { $0 + " kt" } ?? "",
             vr: find(["speeds_vr", "vr"], in: root).map { $0 + " kt" } ?? "",
             v2: find(["speeds_v2", "v2"], in: root).map { $0 + " kt" } ?? "",
-            runway: value(origin, "plan_rwy", "runway")
+            runway: value(origin, "plan_rwy", "runway"),
+            arrivalRunway: value(destination, "plan_rwy", "runway"),
+            departureSID: value(general, "sid_ident"), departureTransition: value(general, "sid_trans"),
+            arrivalSTAR: value(general, "star_ident"), arrivalTransition: value(general, "star_trans")
         )
         if p.route.isEmpty, let fixes = root["navlog"] as? [[String: Any]] {
             p.route = fixes.compactMap { $0["ident"] as? String }.joined(separator: " · ")

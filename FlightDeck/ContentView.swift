@@ -23,6 +23,20 @@ private struct Screen<Content: View>: View {
     }
 }
 
+private struct FlightDeckGlass: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.glassEffect(.regular.tint(.cyan.opacity(0.14)), in: RoundedRectangle(cornerRadius: 18))
+        } else {
+            content.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+        }
+    }
+}
+
+private extension View {
+    func flightDeckGlass() -> some View { modifier(FlightDeckGlass()) }
+}
+
 private struct SummaryView: View {
     @EnvironmentObject var store: FlightPlanStore
     var body: some View {
@@ -32,9 +46,9 @@ private struct SummaryView: View {
                 HStack(spacing: 12) { airport(p.origin, p.originName); Image(systemName: "arrow.right").foregroundStyle(.cyan); airport(p.destination, p.destinationName) }
                 aircraftCard(p)
                 Text("TAKEOFF SPEEDS").font(.caption.bold()).tracking(2).foregroundStyle(.white.opacity(0.65))
-                HStack(spacing: 0) { speed("V1", p.v1); speed("VR", p.vr); speed("V2", p.v2) }.padding(.vertical, 18).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18))
+                HStack(spacing: 0) { speed("V1", p.v1); speed("VR", p.vr); speed("V2", p.v2) }.padding(.vertical, 18).flightDeckGlass()
                 HStack { metric("CRUISE", p.cruiseAltitude); metric("DISTANCE", p.distance); metric("TIME", p.flightTime) }
-                if !p.route.isEmpty { infoCard("ROUTE", p.route) }
+                if !p.formattedRoute.isEmpty { infoCard("ROUTE", p.formattedRoute) }
             } else { emptyState }
         }
     }
@@ -45,17 +59,17 @@ private struct SummaryView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack { Image(systemName: "airplane").foregroundStyle(.cyan); VStack(alignment: .leading, spacing: 3) { Text(p.aircraft.isEmpty ? "Aircraft not listed" : p.aircraft).font(.headline); Text(p.registration.isEmpty ? "REGISTRATION NOT SET" : p.registration.uppercased()).font(.caption).foregroundStyle(.white.opacity(0.6)) }; Spacer(); if !p.registration.isEmpty { Link(destination: JetPhotos.url(for: p.registration)) { Image(systemName: "photo") } } }.font(.title3)
             if !p.registration.isEmpty { JetPhotosImage(registration: p.registration).frame(height: 150).clipShape(RoundedRectangle(cornerRadius: 12)) }
-        }.padding(16).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18))
+        }.padding(16).flightDeckGlass()
     }
     private var emptyState: some View { VStack(spacing: 14) { Image(systemName: "airplane.departure").font(.system(size: 48)).foregroundStyle(.cyan); Text("Your next flight, at a glance").font(.title3.bold()); Text("Connect your SimBrief username to load your latest operational flight plan.").multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.6)); Button { Task { await store.fetch() } } label: { Label("Load Latest OFP", systemImage: "arrow.down.circle.fill").frame(maxWidth: .infinity).padding(14).background(.cyan, in: RoundedRectangle(cornerRadius: 14)).foregroundStyle(.black).fontWeight(.bold) }.disabled(store.isLoading); if store.isLoading { ProgressView("Fetching flight plan…") }; if let error = store.error { Text(error).font(.footnote).foregroundStyle(.orange) }; Text("Set up your username in Settings first.").font(.caption).foregroundStyle(.white.opacity(0.45)) }.frame(maxWidth: .infinity).padding(.top, 80) }
-    private func infoCard(_ title: String, _ text: String) -> some View { VStack(alignment: .leading, spacing: 8) { Text(title).font(.caption.bold()).tracking(1.5).foregroundStyle(.cyan); Text(text).font(.subheadline).lineSpacing(4) }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16)) }
+    private func infoCard(_ title: String, _ text: String) -> some View { VStack(alignment: .leading, spacing: 8) { Text(title).font(.caption.bold()).tracking(1.5).foregroundStyle(.cyan); Text(text).font(.subheadline).lineSpacing(4) }.padding(16).frame(maxWidth: .infinity, alignment: .leading).flightDeckGlass() }
 }
 
 private struct RouteView: View {
     @EnvironmentObject var store: FlightPlanStore
     var body: some View {
         Screen("ROUTE") {
-            if let p = store.plan { Text("\(p.origin)  →  \(p.destination)").font(.title2.bold()); if !p.alternate.isEmpty { Text("ALTERNATE  \(p.alternate)").font(.caption.bold()).foregroundStyle(.cyan) }; Text(p.route.isEmpty ? "No route was included in this OFP." : p.route).font(.system(.body, design: .monospaced)).lineSpacing(7).padding(18).frame(maxWidth: .infinity, alignment: .leading).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16)); Button { UIPasteboard.general.string = p.route } label: { Label("Copy route", systemImage: "doc.on.doc") }.buttonStyle(.borderedProminent).tint(.cyan).foregroundStyle(.black) } else { Text("Load an OFP from the Summary tab.").foregroundStyle(.white.opacity(0.6)) }
+            if let p = store.plan { Text("\(p.origin)  →  \(p.destination)").font(.title2.bold()); if !p.alternate.isEmpty { Text("ALTERNATE  \(p.alternate)").font(.caption.bold()).foregroundStyle(.cyan) }; Text(p.formattedRoute.isEmpty ? "No route was included in this OFP." : p.formattedRoute).font(.system(.body, design: .monospaced)).lineSpacing(7).padding(18).frame(maxWidth: .infinity, alignment: .leading).flightDeckGlass(); Button { UIPasteboard.general.string = p.formattedRoute } label: { Label("Copy route", systemImage: "doc.on.doc") }.buttonStyle(.borderedProminent).tint(.cyan).foregroundStyle(.black) } else { Text("Load an OFP from the Summary tab.").foregroundStyle(.white.opacity(0.6)) }
         }
     }
 }
