@@ -1,0 +1,22 @@
+{
+  "name": "FlightDeck",
+  "identifier": "com.khyrie.flightdeck.source",
+  "apps": [
+    {
+      "name": "FlightDeck",
+      "bundleIdentifier": "com.khyrie.flightdeck",
+      "developerName": "Khyrie",
+      "subtitle": "SimBrief flight briefing",
+      "localizedDescription": "A clean iPhone briefing companion for your latest SimBrief OFP: route, aircraft, takeoff speeds, fuel, weights, and airport details.",
+          "tintColor": "#45D5F2",
+      "category": "utilities",
+      "version": "1.0.0",
+      "versionDate": "2026-10-28T00:00:00Z",
+      "downloadURL": "https://github.com/aepikgamer-art/flightdeck-ofp/releases/latest/download/FlightDeck.ipa",
+      "size": 0,
+      "minOSVersion": "17.0"
+    }
+  ]
+}
+
+
