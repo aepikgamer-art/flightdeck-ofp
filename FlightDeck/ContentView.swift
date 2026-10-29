@@ -180,10 +180,14 @@ enum JetPhotos {
 
             var imageRequest = URLRequest(url: imageURL)
             imageRequest.timeoutInterval = 20
-            imageRequest.setValue("image/avif,image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
+            // Ask JetPhotos for the JPEG represented by its .jpg URL. Preferring
+            // AVIF/WebP here can return bytes UIImage cannot decode on older iOS.
+            imageRequest.setValue("image/jpeg,image/*;q=0.8,*/*;q=0.5", forHTTPHeaderField: "Accept")
             imageRequest.setValue("https://www.jetphotos.com/", forHTTPHeaderField: "Referer")
             let (imageData, imageResponse) = try await URLSession.shared.data(for: imageRequest)
-            guard (imageResponse as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+            guard let response = imageResponse as? HTTPURLResponse,
+                  response.statusCode == 200,
+                  response.value(forHTTPHeaderField: "Content-Type")?.lowercased().hasPrefix("image/") == true else { return nil }
             return UIImage(data: imageData)
         } catch {
             return nil
