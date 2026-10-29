@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct ContentView: View {
     @EnvironmentObject private var store: FlightPlanStore
@@ -67,11 +66,6 @@ private struct SummaryView: View {
     private func aircraftCard(_ p: FlightPlan) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack { Image(systemName: "airplane").foregroundStyle(theme.accentColor); VStack(alignment: .leading, spacing: 3) { Text(p.aircraft.isEmpty ? "Aircraft not listed" : p.aircraft).font(.headline); Text(p.registration.isEmpty ? "REGISTRATION NOT SET" : p.registration.uppercased()).font(.caption).foregroundStyle(.white.opacity(0.6)) }; Spacer(); if !p.registration.isEmpty { Link(destination: JetPhotos.url(for: p.registration)) { Label("JetPhotos", systemImage: "arrow.up.right.square").font(.caption) } } }.font(.title3)
-            if !p.registration.isEmpty {
-                JetPhotosImage(registration: p.registration)
-                    .frame(height: 170)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
         }.padding(16).flightDeckGlass()
     }
     private var emptyState: some View { VStack(spacing: 14) { Image(systemName: "airplane.departure").font(.system(size: 48)).foregroundStyle(theme.accentColor); Text("Your next flight, at a glance").font(.title3.bold()); Text("Connect your SimBrief username to load your latest operational flight plan.").multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.6)); Button { Task { await store.fetch() } } label: { Label("Load Latest OFP", systemImage: "arrow.down.circle.fill").frame(maxWidth: .infinity).padding(14).background(theme.buttonColor, in: RoundedRectangle(cornerRadius: 14)).foregroundStyle(theme.buttonTextColor).fontWeight(.bold) }.disabled(store.isLoading); if store.isLoading { ProgressView("Fetching flight plan…") }; if let error = store.error { Text(error).font(.footnote).foregroundStyle(.orange) }; Text("Set up your username in Settings first.").font(.caption).foregroundStyle(.white.opacity(0.45)) }.frame(maxWidth: .infinity).padding(.top, 80) }
@@ -108,6 +102,7 @@ private struct SettingsView: View {
     @EnvironmentObject var theme: FlightDeckTheme
     @State private var themeName = ""
     @State private var showingSaveTheme = false
+    @FocusState private var simBriefFieldFocused: Bool
     var body: some View {
         Screen("SETTINGS") {
             Text("APPEARANCE").font(.caption.bold()).tracking(2).foregroundStyle(theme.accentColor)
@@ -148,10 +143,22 @@ private struct SettingsView: View {
 
             Text("SIMBRIEF ACCOUNT").font(.caption.bold()).tracking(2).foregroundStyle(theme.accentColor)
             Text("Use your SimBrief username or numeric Pilot ID. The app fetches your latest OFP directly from SimBrief; it never asks for your password.").font(.subheadline).foregroundStyle(.white.opacity(0.65))
-            TextField("SimBrief username or Pilot ID", text: $store.username).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.asciiCapable).padding(14).background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+            TextField("SimBrief username or Pilot ID", text: $store.username)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .focused($simBriefFieldFocused)
+                .padding(14)
+                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
             Button { Task { await store.fetch() } } label: { Label("Save and fetch OFP", systemImage: "arrow.down.circle.fill").frame(maxWidth: .infinity).padding(14).background(theme.buttonColor, in: RoundedRectangle(cornerRadius: 14)).foregroundStyle(theme.buttonTextColor).fontWeight(.bold) }
             if let error = store.error { Text(error).foregroundStyle(.orange).font(.footnote) }
             Link(destination: URL(string: "https://www.simbrief.com/home/")!) { Label("Open SimBrief", systemImage: "arrow.up.right.square") }.padding(.top, 8)
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { simBriefFieldFocused = false }
+            }
         }
     }
 }
@@ -162,88 +169,6 @@ enum JetPhotos {
         let value = registration.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         let encoded = value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
         return URL(string: "https://www.jetphotos.com/registration/\(encoded)")!
-    }
-
-    static func photo(for registration: String) async -> UIImage? {
-        do {
-            var pageRequest = URLRequest(url: url(for: registration))
-            pageRequest.timeoutInterval = 20
-            pageRequest.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
-            let (pageData, pageResponse) = try await URLSession.shared.data(for: pageRequest)
-            guard (pageResponse as? HTTPURLResponse)?.statusCode == 200,
-                  let html = String(data: pageData, encoding: .utf8) else { return nil }
-
-            let normalizedHTML = html
-                .replacingOccurrences(of: #"\/"#, with: "/")
-                .replacingOccurrences(of: "&amp;", with: "&")
-            guard let imageURL = firstPhotoURL(in: normalizedHTML) else { return nil }
-
-            var imageRequest = URLRequest(url: imageURL)
-            imageRequest.timeoutInterval = 20
-            // Ask JetPhotos for the JPEG represented by its .jpg URL. Preferring
-            // AVIF/WebP here can return bytes UIImage cannot decode on older iOS.
-            imageRequest.setValue("image/jpeg,image/*;q=0.8,*/*;q=0.5", forHTTPHeaderField: "Accept")
-            imageRequest.setValue("https://www.jetphotos.com/", forHTTPHeaderField: "Referer")
-            let (imageData, imageResponse) = try await URLSession.shared.data(for: imageRequest)
-            guard let response = imageResponse as? HTTPURLResponse,
-                  response.statusCode == 200,
-                  response.value(forHTTPHeaderField: "Content-Type")?.lowercased().hasPrefix("image/") == true else { return nil }
-            return UIImage(data: imageData)
-        } catch {
-            return nil
-        }
-    }
-
-    private static func firstPhotoURL(in html: String) -> URL? {
-        let patterns = [
-            #"(?:https?:)?//cdn\.jetphotos\.com/(?:thumb|full)/[^\"'\\\s<>]+?\.(?:jpg|jpeg|webp)(?:\?[^\"'\s<>]*)?"#,
-            #"<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']"#,
-            #"<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']"#
-        ]
-        for (index, pattern) in patterns.enumerated() {
-            guard let range = html.range(of: pattern, options: [.regularExpression, .caseInsensitive]) else { continue }
-            var value = String(html[range])
-            if index > 0 {
-                guard let urlRange = value.range(of: #"https?://[^\"']+"#, options: .regularExpression) else { continue }
-                value = String(value[urlRange])
-            }
-            if value.hasPrefix("//") { value = "https:" + value }
-            if let url = URL(string: value), url.host?.lowercased().hasSuffix("jetphotos.com") == true { return url }
-        }
-        return nil
-    }
-}
-
-private struct JetPhotosImage: View {
-    let registration: String
-    @State private var image: UIImage?
-    @State private var isLoading = true
-
-    var body: some View {
-        Group {
-            if let image {
-                Image(uiImage: image).resizable().scaledToFill()
-            } else {
-                ZStack {
-                    Color.white.opacity(0.05)
-                    VStack(spacing: 7) {
-                        if isLoading { ProgressView().tint(.white.opacity(0.75)) }
-                        else { Image(systemName: "camera").font(.title2) }
-                        Text(isLoading ? "Loading aircraft photo…" : "No JetPhotos image available")
-                            .font(.caption)
-                        Link("View photos on JetPhotos", destination: JetPhotos.url(for: registration))
-                            .font(.caption.bold())
-                    }.foregroundStyle(.white.opacity(0.75))
-                }
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .clipped()
-        .task(id: registration) {
-            isLoading = true
-            image = await JetPhotos.photo(for: registration)
-            isLoading = false
-        }
     }
 }
 
