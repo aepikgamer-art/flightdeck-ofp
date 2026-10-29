@@ -71,6 +71,7 @@ private struct DetailsView: View {
         }
     }
     private func detail(_ title: String, _ value: String) -> some View { HStack(alignment: .top) { Text(title).foregroundStyle(.white.opacity(0.55)); Spacer(); Text(value.isEmpty ? "—" : value).multilineTextAlignment(.trailing) }.font(.subheadline).padding(.vertical, 11).overlay(alignment: .bottom) { Rectangle().fill(.white.opacity(0.08)).frame(height: 1) }
+    }
 }
 
 private struct SettingsView: View {
@@ -125,4 +126,5 @@ private extension JetPhotos {
         return nil
     }
 }
+
 
