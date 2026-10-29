@@ -66,8 +66,12 @@ private struct SummaryView: View {
     private func metric(_ label: String, _ value: String) -> some View { VStack(alignment: .leading, spacing: 6) { Text(label).font(.system(size: 10, weight: .bold)).foregroundStyle(.white.opacity(0.5)); Text(value.isEmpty ? "—" : value).font(.subheadline.bold()).lineLimit(1) }.frame(maxWidth: .infinity, alignment: .leading) }
     private func aircraftCard(_ p: FlightPlan) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack { Image(systemName: "airplane").foregroundStyle(theme.accentColor); VStack(alignment: .leading, spacing: 3) { Text(p.aircraft.isEmpty ? "Aircraft not listed" : p.aircraft).font(.headline); Text(p.registration.isEmpty ? "REGISTRATION NOT SET" : p.registration.uppercased()).font(.caption).foregroundStyle(.white.opacity(0.6)) }; Spacer(); if !p.registration.isEmpty { Link(destination: JetPhotos.url(for: p.registration)) { Image(systemName: "photo") } } }.font(.title3)
-            if !p.registration.isEmpty { JetPhotosImage(registration: p.registration).frame(height: 150).clipShape(RoundedRectangle(cornerRadius: 12)) }
+            HStack { Image(systemName: "airplane").foregroundStyle(theme.accentColor); VStack(alignment: .leading, spacing: 3) { Text(p.aircraft.isEmpty ? "Aircraft not listed" : p.aircraft).font(.headline); Text(p.registration.isEmpty ? "REGISTRATION NOT SET" : p.registration.uppercased()).font(.caption).foregroundStyle(.white.opacity(0.6)) }; Spacer(); if !p.registration.isEmpty { Link(destination: JetPhotos.url(for: p.registration)) { Label("JetPhotos", systemImage: "arrow.up.right.square").font(.caption) } } }.font(.title3)
+            if !p.registration.isEmpty {
+                JetPhotosGallery(registration: p.registration)
+                    .frame(height: 300)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
         }.padding(16).flightDeckGlass()
     }
     private var emptyState: some View { VStack(spacing: 14) { Image(systemName: "airplane.departure").font(.system(size: 48)).foregroundStyle(theme.accentColor); Text("Your next flight, at a glance").font(.title3.bold()); Text("Connect your SimBrief username to load your latest operational flight plan.").multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.6)); Button { Task { await store.fetch() } } label: { Label("Load Latest OFP", systemImage: "arrow.down.circle.fill").frame(maxWidth: .infinity).padding(14).background(theme.buttonColor, in: RoundedRectangle(cornerRadius: 14)).foregroundStyle(theme.buttonTextColor).fontWeight(.bold) }.disabled(store.isLoading); if store.isLoading { ProgressView("Fetching flight plan…") }; if let error = store.error { Text(error).font(.footnote).foregroundStyle(.orange) }; Text("Set up your username in Settings first.").font(.caption).foregroundStyle(.white.opacity(0.45)) }.frame(maxWidth: .infinity).padding(.top, 80) }
@@ -152,44 +156,13 @@ private struct SettingsView: View {
     }
 }
 
-private enum JetPhotos {
-    static func url(for registration: String) -> URL { URL(string: "https://www.jetphotos.com/registration/\(registration.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? registration)")! }
-}
-
-private struct JetPhotosImage: View {
-    let registration: String
-    @State private var photoURL: URL?
-    var body: some View {
-        Group {
-            if let photoURL { AsyncImage(url: photoURL) { image in image.resizable().scaledToFill() } placeholder: { placeholder } }
-            else { placeholder }
-        }
-        .task(id: registration) { photoURL = await JetPhotos.photoURL(for: registration) }
-        .frame(maxWidth: .infinity).clipped()
-    }
-    private var placeholder: some View {
-        ZStack { Color.white.opacity(0.05); VStack(spacing: 8) { Image(systemName: "camera").font(.title2); Text("Aircraft photos").font(.caption); Link("Search on JetPhotos", destination: JetPhotos.url(for: registration)).font(.caption.bold()) }.foregroundStyle(.white.opacity(0.7)) }
+enum JetPhotos {
+    static func url(for registration: String) -> URL {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-"))
+        let value = registration.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let encoded = value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
+        return URL(string: "https://www.jetphotos.com/registration/\(encoded)")!
     }
 }
-
-private extension JetPhotos {
-    static func photoURL(for registration: String) async -> URL? {
-        do {
-            var request = URLRequest(url: url(for: registration)); request.timeoutInterval = 12
-            request.setValue("Mozilla/5.0 FlightDeck/1.0", forHTTPHeaderField: "User-Agent")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200, let html = String(data: data, encoding: .utf8) else { return nil }
-            let patterns = [#"<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']"#, #"<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']"#]
-            for pattern in patterns {
-                if let range = html.range(of: pattern, options: [.regularExpression, .caseInsensitive]),
-                   let capture = html[range].range(of: #"https?://[^\"']+"#, options: .regularExpression) {
-                    return URL(string: String(html[capture]))
-                }
-            }
-        } catch { return nil }
-        return nil
-    }
-}
-
 
 
