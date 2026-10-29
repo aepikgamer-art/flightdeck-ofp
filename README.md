@@ -14,7 +14,7 @@ A compact iPhone companion for your latest SimBrief Operational Flight Plan. It 
 3. Install it with AltStore Classic, SideStore, or another compatible sideloader. The IPA is unsigned; the sideloader signs it with your Apple ID.
 4. Add this source to a compatible sideloader using the AltDirect link above.
 
-To publish a release automatically, push a tag such as `v1.0.0`. The workflow attaches the IPA to a GitHub release, which the AltStore source points to.
+To publish a release automatically, push a tag such as `v1.0.1`. The workflow attaches the IPA to a GitHub release, which the AltStore source points to.
 
 ## Build locally on macOS
 Install Xcode and XcodeGen, then run `xcodegen generate` and build the `FlightDeck` scheme.
@@ -24,3 +24,4 @@ Install Xcode and XcodeGen, then run `xcodegen generate` and build the `FlightDe
 - JetPhotos registration search pages for aircraft photos
 
 Flight information is fetched directly on your device. The saved SimBrief username is stored locally in the app's preferences.
+

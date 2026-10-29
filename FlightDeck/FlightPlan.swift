@@ -75,7 +75,7 @@ enum FetchError: LocalizedError {
         do {
             var components = URLComponents(string: "https://www.simbrief.com/api/xml.fetcher.php")!
             let key = name.allSatisfy(\.isNumber) ? "userid" : "username"
-            components.queryItems = [URLQueryItem(name: key, value: name), URLQueryItem(name: "json", value: "1")]
+            components.queryItems = [URLQueryItem(name: key, value: name), URLQueryItem(name: "json", value: "v2")]
             var request = URLRequest(url: components.url!); request.timeoutInterval = 25
             let (data, response) = try await URLSession.shared.data(for: request)
             guard (response as? HTTPURLResponse)?.statusCode == 200,
@@ -85,3 +85,4 @@ enum FetchError: LocalizedError {
         } catch { self.error = error.localizedDescription }
     }
 }
+
