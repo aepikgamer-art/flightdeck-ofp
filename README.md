@@ -20,7 +20,7 @@ A compact iPhone companion for your latest SimBrief Operational Flight Plan. It 
 - Customize accent and button colors, choose a font style, and save named themes on your device.
 - Route formatting starts with departure airport/runway and SID, then shows the enroute route and arrival procedure/runway.
 - Summary, route, and details tabs for aircraft/registration, airports, takeoff speeds, altitude, distance, fuel, weights, and timing.
-- Inline JetPhotos registration galleries for real-world aircraft photos, loaded from JetPhotos in the app.
+- Native aircraft photo display sourced from JetPhotos, with a direct link to the registration page.
 - AltStore source manifest and [AltDirect](https://altdirect.app/?url=https://raw.githubusercontent.com/aepikgamer-art/flightdeck-ofp/main/altstore-source.json) link.
 
 ## Install
@@ -29,7 +29,7 @@ A compact iPhone companion for your latest SimBrief Operational Flight Plan. It 
 3. Install it with AltStore Classic, SideStore, or another compatible sideloader. The IPA is unsigned; the sideloader signs it with your Apple ID.
 4. Add this source to a compatible sideloader using the AltDirect link above.
 
-To publish a release automatically, push a tag such as `v1.0.5`. The workflow attaches the IPA to a GitHub release, which the AltStore source points to.
+To publish a release automatically, push a tag such as `v1.0.6`. The workflow attaches the IPA to a GitHub release, which the AltStore source points to.
 
 ## Build locally on macOS
 Install Xcode and XcodeGen, then run `xcodegen generate` and build the `FlightDeck` scheme.

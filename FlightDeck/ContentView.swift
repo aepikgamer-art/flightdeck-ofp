@@ -68,8 +68,8 @@ private struct SummaryView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack { Image(systemName: "airplane").foregroundStyle(theme.accentColor); VStack(alignment: .leading, spacing: 3) { Text(p.aircraft.isEmpty ? "Aircraft not listed" : p.aircraft).font(.headline); Text(p.registration.isEmpty ? "REGISTRATION NOT SET" : p.registration.uppercased()).font(.caption).foregroundStyle(.white.opacity(0.6)) }; Spacer(); if !p.registration.isEmpty { Link(destination: JetPhotos.url(for: p.registration)) { Label("JetPhotos", systemImage: "arrow.up.right.square").font(.caption) } } }.font(.title3)
             if !p.registration.isEmpty {
-                JetPhotosGallery(registration: p.registration)
-                    .frame(height: 300)
+                JetPhotosImage(registration: p.registration)
+                    .frame(height: 170)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }.padding(16).flightDeckGlass()
@@ -162,6 +162,84 @@ enum JetPhotos {
         let value = registration.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         let encoded = value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
         return URL(string: "https://www.jetphotos.com/registration/\(encoded)")!
+    }
+
+    static func photo(for registration: String) async -> UIImage? {
+        do {
+            var pageRequest = URLRequest(url: url(for: registration))
+            pageRequest.timeoutInterval = 20
+            pageRequest.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
+            let (pageData, pageResponse) = try await URLSession.shared.data(for: pageRequest)
+            guard (pageResponse as? HTTPURLResponse)?.statusCode == 200,
+                  let html = String(data: pageData, encoding: .utf8) else { return nil }
+
+            let normalizedHTML = html
+                .replacingOccurrences(of: #"\/"#, with: "/")
+                .replacingOccurrences(of: "&amp;", with: "&")
+            guard let imageURL = firstPhotoURL(in: normalizedHTML) else { return nil }
+
+            var imageRequest = URLRequest(url: imageURL)
+            imageRequest.timeoutInterval = 20
+            imageRequest.setValue("image/avif,image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
+            imageRequest.setValue("https://www.jetphotos.com/", forHTTPHeaderField: "Referer")
+            let (imageData, imageResponse) = try await URLSession.shared.data(for: imageRequest)
+            guard (imageResponse as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+            return UIImage(data: imageData)
+        } catch {
+            return nil
+        }
+    }
+
+    private static func firstPhotoURL(in html: String) -> URL? {
+        let patterns = [
+            #"(?:https?:)?//cdn\.jetphotos\.com/(?:thumb|full)/[^\"'\\\s<>]+?\.(?:jpg|jpeg|webp)(?:\?[^\"'\s<>]*)?"#,
+            #"<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']"#,
+            #"<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']"#
+        ]
+        for (index, pattern) in patterns.enumerated() {
+            guard let range = html.range(of: pattern, options: [.regularExpression, .caseInsensitive]) else { continue }
+            var value = String(html[range])
+            if index > 0 {
+                guard let urlRange = value.range(of: #"https?://[^\"']+"#, options: .regularExpression) else { continue }
+                value = String(value[urlRange])
+            }
+            if value.hasPrefix("//") { value = "https:" + value }
+            if let url = URL(string: value), url.host?.lowercased().hasSuffix("jetphotos.com") == true { return url }
+        }
+        return nil
+    }
+}
+
+private struct JetPhotosImage: View {
+    let registration: String
+    @State private var image: UIImage?
+    @State private var isLoading = true
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                ZStack {
+                    Color.white.opacity(0.05)
+                    VStack(spacing: 7) {
+                        if isLoading { ProgressView().tint(.white.opacity(0.75)) }
+                        else { Image(systemName: "camera").font(.title2) }
+                        Text(isLoading ? "Loading aircraft photo…" : "No JetPhotos image available")
+                            .font(.caption)
+                        Link("View photos on JetPhotos", destination: JetPhotos.url(for: registration))
+                            .font(.caption.bold())
+                    }.foregroundStyle(.white.opacity(0.75))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .clipped()
+        .task(id: registration) {
+            isLoading = true
+            image = await JetPhotos.photo(for: registration)
+            isLoading = false
+        }
     }
 }
 
