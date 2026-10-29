@@ -10,11 +10,9 @@
       "localizedDescription": "A clean iPhone briefing companion for your latest SimBrief OFP: route, aircraft, takeoff speeds, fuel, weights, and airport details.",
       "tintColor": "#45D5F2",
       "category": "utilities",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "downloadURL": "https://github.com/aepikgamer-art/flightdeck-ofp/releases/latest/download/FlightDeck.ipa",
       "minOSVersion": "17.0"
     }
   ]
 }
-
-
