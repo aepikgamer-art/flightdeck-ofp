@@ -80,7 +80,7 @@ private struct DetailsView: View {
         Screen("OFP DETAILS") {
             if let p = store.plan {
                 Text("DISPATCH SNAPSHOT").font(.caption.bold()).tracking(2).foregroundStyle(.cyan)
-                detail("Aircraft", p.aircraft); detail("Registration", p.registration); detail("Departure", [p.origin, p.originName].filter { !$0.isEmpty }.joined(separator: " · ")); detail("Arrival", [p.destination, p.destinationName].filter { !$0.isEmpty }.joined(separator: " · ")); detail("Alternate", p.alternate); detail("Cruise altitude", p.cruiseAltitude); detail("Planned distance", p.distance); detail("Estimated time", p.flightTime); detail("Block fuel", p.blockFuel); detail("Estimated takeoff weight", p.takeoffWeight); detail("Departure runway", p.runway)
+                detail("Aircraft", p.aircraft); detail("Registration", p.registration); detail("Departure", [p.origin, p.originName].filter { !$0.isEmpty }.joined(separator: " · ")); detail("Arrival", [p.destination, p.destinationName].filter { !$0.isEmpty }.joined(separator: " · ")); detail("Alternate", p.alternate); detail("Cruise altitude", p.cruiseAltitude); detail("Planned distance", p.distance); detail("Estimated time", p.flightTime); detail("Block fuel", p.blockFuel); detail("Estimated takeoff weight", p.takeoffWeight); detail("Departure runway", p.runway); detail("Arrival runway", p.arrivalRunway)
             } else { Text("Your OFP fuel, weight, and airport details will appear here.").foregroundStyle(.white.opacity(0.6)) }
         }
     }

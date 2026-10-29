@@ -4,7 +4,7 @@ A compact iPhone companion for your latest SimBrief Operational Flight Plan. It 
 
 ## Features
 - Fetch the latest SimBrief OFP by username or Pilot ID. No SimBrief password is requested or stored.
-- Liquid Glass styling on modern iOS, with a material fallback on older versions.\n- Route formatting starts with departure airport/runway and SID, then shows the enroute route and arrival procedure/runway.\n- Summary, route, and details tabs for aircraft/registration, airports, takeoff speeds, altitude, distance, fuel, weights, and timing.
+- Liquid Glass styling on modern iOS, with a material fallback on older versions.`n- Route formatting starts with departure airport/runway and SID, then shows the enroute route and arrival procedure/runway.`n- Summary, route, and details tabs for aircraft/registration, airports, takeoff speeds, altitude, distance, fuel, weights, and timing.
 - JetPhotos registration search for real-world aircraft photos.
 - AltStore source manifest and [AltDirect](https://altdirect.app/?url=https://raw.githubusercontent.com/aepikgamer-art/flightdeck-ofp/main/altstore-source.json) link.
 
@@ -24,5 +24,6 @@ Install Xcode and XcodeGen, then run `xcodegen generate` and build the `FlightDe
 - JetPhotos registration search pages for aircraft photos
 
 Flight information is fetched directly on your device. The saved SimBrief username is stored locally in the app's preferences.
+
 
 
