@@ -8,6 +8,12 @@ A compact iPhone companion for your latest SimBrief Operational Flight Plan. It 
   <a href="https://github.com/aepikgamer-art/flightdeck-ofp/releases/latest/download/FlightDeck.ipa"><img src="https://img.shields.io/badge/DOWNLOAD-LATEST%20IPA-1677C8?style=for-the-badge&logo=apple&logoColor=white" alt="Download the latest IPA"></a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/aepikgamer-art/flightdeck-ofp/stargazers"><img src="https://img.shields.io/github/stars/aepikgamer-art/flightdeck-ofp?style=for-the-badge&logo=github&logoColor=white&label=stars&color=E3B341" alt="GitHub stars"></a>
+  <a href="https://github.com/aepikgamer-art/flightdeck-ofp/commits/main"><img src="https://img.shields.io/github/commit-activity/t/aepikgamer-art/flightdeck-ofp?style=for-the-badge&logo=git&logoColor=white&label=commits&color=5B8DEF" alt="Total commits"></a>
+  <a href="https://github.com/aepikgamer-art/flightdeck-ofp/commits/main"><img src="https://img.shields.io/github/last-commit/aepikgamer-art/flightdeck-ofp/main?style=for-the-badge&logo=github&logoColor=white&label=last%20commit&color=8854D0" alt="Last commit"></a>
+</p>
+
 ## Features
 - Fetch the latest SimBrief OFP by username or Pilot ID. No SimBrief password is requested or stored.
 - Liquid Glass styling on modern iOS, with a material fallback on older versions.
